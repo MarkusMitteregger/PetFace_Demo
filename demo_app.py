@@ -1,71 +1,87 @@
 import streamlit as st
 from PIL import Image
-import torch
-from torchvision import transforms
-import functions as fn
+from pet_identifier import PetIdentifier
 
-
-model = fn.load_model()
-img_test = Image.open("Cats/Test_Tigercat.jpg")  # Replace with your image path
-cat_1 = Image.open("Cats/cat_3.png")  
-cat_2 = Image.open("Cats/cat_14.png")
-cat_3 = Image.open("Cats/cat_15.png")
-
-# Create dictionaries with embeddings of known cats
-list_1 = ["Fred", fn.get_embeddings(cat_1, model), cat_1]
-list_2 = ["George", fn.get_embeddings(cat_2, model), cat_2]
-list_3 = ["Ringo", fn.get_embeddings(cat_3, model), cat_3]
-known_cats = [list_1, list_2, list_3]
-print("Model and known cats loaded.")
-
-
-# -------------------------------
-# 🎨 STREAMLIT APP UI
-# -------------------------------
 st.set_page_config(page_title="🐾 Pet Identifier", layout="wide")
-
 st.title("🐶 Pet Identifier")
 
-st.markdown("## Your registered Pets")
+# Initialize the PetIdentifier class in Streamlit session state
+if "identifier" not in st.session_state:
+    st.session_state.identifier = PetIdentifier()
 
-cols = st.columns(len(known_cats))
-for idx, cat in enumerate(known_cats):
-    with cols[idx]:
-        st.image(cat[2], caption=cat[0], use_container_width=True)
+identifier = st.session_state.identifier
+
+# ========================
+# Section: Add New Pets
+# ========================
+st.header("Register your pets 🐾")
+
+with st.expander("Add a new pet"):
+    input_mode = st.radio(
+        "Choose input method for your pet photo:",
+        ["Upload image", "Use camera"],
+        key="add_mode"
+    )
+
+    if input_mode == "Upload image":
+        new_pet_image = st.file_uploader("Upload your pet photo", type=["jpg", "jpeg", "png"], key="add_upload")
+    else:
+        new_pet_image = st.camera_input("Take a photo of your pet", key="add_camera")
+
+    new_pet_name = st.text_input("Enter pet name")
+
+    if st.button("Add pet") and new_pet_image and new_pet_name:
+        image = Image.open(new_pet_image).convert("RGB")
+        image.thumbnail((512, 512))  # optional resizing for performance
+        identifier.add_pet(new_pet_name, image)
+        st.success(f"Added {new_pet_name}!")
+
+# ========================
+# Display Registered Pets
+# ========================
+if identifier.known_pets:
+    st.subheader("Registered pets")
+    cols = st.columns(len(identifier.known_pets))
+    for i, (name, _, img) in enumerate(identifier.known_pets):
+        with cols[i]:
+            st.image(img, caption=name, use_container_width=True)
+else:
+    st.info("No pets registered yet. Add one above.")
 
 st.markdown("---")
-st.markdown(
-    "Upload or take a photo of an animal and the model will identify your beloved pet."
+
+# ========================
+# Section: Identify Pets
+# ========================
+st.header("Identify a pet 🐕🐈")
+
+input_mode = st.radio(
+    "Choose input method for identification:",
+    ["Upload image", "Use camera"],
+    key="identify_mode"
 )
 
-uploaded_file = st.file_uploader(
-    "Upload or take a photo",
-    type=["jpg", "jpeg", "png"],
-    label_visibility="collapsed"
-)
+if input_mode == "Upload image":
+    upload = st.file_uploader("Upload or take a photo", type=["jpg", "jpeg", "png"], key="identify_upload")
+else:
+    upload = st.camera_input("Take a picture", key="identify_camera")
 
-
-if uploaded_file is not None:
-    image = Image.open(uploaded_file).convert("RGB")
-    test_emb = fn.get_embeddings(image, model)
-
+if upload is not None:
+    image = Image.open(upload).convert("RGB")
+    image.thumbnail((512, 512))
 
     col1, col2 = st.columns([1, 1])
 
     with col1:
-        st.image(image, caption="Cat to identify", use_container_width=True)
+        st.image(image, caption="Pet to identify", use_container_width=True)
 
     with col2:
-        st.subheader("🔍 Classification Results")
-        with st.spinner("Running model..."):
-            closest_cat, distance = fn.find_closest_cat(test_emb, known_cats)
-        st.write(f"**Pet Name:** {closest_cat}")
-        st.write(f"**Distance:** {distance:.4f}")
-        st.success("✅ Pet identification complete!")
-
+        with st.spinner("Identifying..."):
+            name, dist = identifier.identify(image)
+        st.subheader("🔍 Results")
+        st.write(f"**Pet:** {name}")
+        st.write(f"**Distance:** {dist:.3f}")
 else:
-    st.info("👆 Upload or take a photo to begin classification.")
+    st.info("📸 Upload or take a photo to identify your pet.")
 
-st.markdown("---")
 st.caption("Made with ❤️ using Streamlit and PyTorch")
-

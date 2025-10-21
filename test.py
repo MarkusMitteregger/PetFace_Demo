@@ -1,7 +1,7 @@
 from PIL import Image
 import torch
 from torchvision import transforms
-import functions as fn
+import pet_identifier as fn
 
 
 if __name__ == "__main__":
