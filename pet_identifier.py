@@ -2,17 +2,16 @@ from PIL import Image
 import torch
 from torchvision import transforms
 from model.EfficientNet import EfficientNet
-import numpy as np
 
 class PetIdentifier:
-    def __init__(self, model_path="best_efficientnet_triplet.pth", device="cpu", threshold=0.84):
+    def __init__(self, model_path="best_efficientnet_triplet.pth", device="cpu", threshold=0.7514):
         self.device = torch.device(device)
         self.threshold = threshold
         self.model = self._load_model(model_path)
         self.known_pets = []  # Each: [name, embedding, image]
 
     def _load_model(self, model_path):
-        model = EfficientNet(embedding_dim=224)
+        model = EfficientNet(embedding_dim=128)
         checkpoint = torch.load(model_path, map_location=self.device)
         model.load_state_dict(checkpoint["model_state_dict"])
         model.to(self.device)
