@@ -4,7 +4,7 @@ from torchvision import transforms
 from model.EfficientNet import EfficientNet
 
 class PetIdentifier:
-    def __init__(self, model_path="best_efficientnet_triplet.pth", device="cpu", threshold=0.7514):
+    def __init__(self, model_path="best_efficientnet_triplet.pth", device="cpu", threshold=0.5):
         self.device = torch.device(device)
         self.threshold = threshold
         self.model = self._load_model(model_path)
