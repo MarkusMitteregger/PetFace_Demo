@@ -44,7 +44,7 @@ if identifier.known_pets:
     cols = st.columns(len(identifier.known_pets))
     for i, (name, _, img) in enumerate(identifier.known_pets):
         with cols[i]:
-            st.image(img, caption=name, use_container_width=True)
+            st.image(img, caption=name, width=150)
 else:
     st.info("No pets registered yet. Add one above.")
 
