@@ -88,7 +88,7 @@ else:
 
 if upload is not None:
     # Prepare image and display side-by-side with results
-    image = Image.open(upload).convert("RGB")
+    image = identifier.crop_image(Image.open(upload).convert("RGB"), auto_crop=True)
     image.thumbnail((512, 512))
 
     col1, col2 = st.columns([1, 1])

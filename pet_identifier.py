@@ -2,6 +2,8 @@ from PIL import Image
 import torch
 from torchvision import transforms
 from model.EfficientNet import EfficientNet
+from catface_detector import detect_and_crop
+import numpy as np
 
 """
 pet_identifier.py
@@ -84,6 +86,24 @@ class PetIdentifier:
                                  std=[0.229, 0.224, 0.225])
         ])
         return transform(image)
+    
+    def crop_image(self, image, auto_crop=False):
+        """Optionally crop the image.
+
+        Args:
+            image (PIL.Image.Image or np.ndarray): input image.
+            auto_crop (bool): if True, run detect_and_crop and return a PIL.Image.
+
+        Returns:
+            PIL.Image.Image: cropped image or original.
+        """
+
+        if auto_crop:
+            image = detect_and_crop(np.array(image))
+            image = Image.fromarray(image)
+        return image
+
+
 
     def get_embedding(self, image):
         """
@@ -108,6 +128,8 @@ class PetIdentifier:
             name (str): label/name for the pet.
             image (PIL.Image): image of the pet to register.
         """
+        image = self.crop_image(image, auto_crop=True)
+
         emb = self.get_embedding(image)
         # Store the original image for possible later use (display, re-compute, etc.)
         self.known_pets.append([name, emb, image])
@@ -141,6 +163,7 @@ class PetIdentifier:
             tuple: (name (str), distance (float)). If the smallest distance
                    exceeds self.threshold, name will be "Unknown".
         """
+        image = self.crop_image(image, auto_crop=True)
         test_emb = self.get_embedding(image)
         closest, min_dist = None, float("inf")
         # Linear search for nearest neighbour in embedding space
