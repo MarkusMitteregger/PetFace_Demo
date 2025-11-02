@@ -18,6 +18,7 @@ Usage:
     name, dist = pid.identify(Image.open("unknown.jpg"))
 """
 
+
 class PetIdentifier:
     """
     PetIdentifier manages a list of known pets (name, embedding, image)
