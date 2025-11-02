@@ -13,7 +13,7 @@ def detect_and_crop(image: np.ndarray) -> np.ndarray:
 
     # Load YOLOv8 model at startup
     try:
-        model = YOLO("catface_detector.pt")
+        model = YOLO("catface_detector.pt", verbose=False)
         print("✅ YOLO cat face detector loaded successfully.")
     except Exception as e:
         print("⚠️ Warning: YOLO model not loaded.", e)
